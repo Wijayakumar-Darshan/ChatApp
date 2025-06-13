@@ -15,26 +15,33 @@ export const SocketContextProvider = ({ children }) => {
 
 	useEffect(() => {
 		if (authUser) {
-			const socket = io("http://localhost:5000", {
+			const newSocket = io(import.meta.env.VITE_BACKEND_URL, {
 				query: {
 					userId: authUser._id,
 				},
+				withCredentials: true, // Important for CORS & cookies
 			});
 
-			setSocket(socket);
+			setSocket(newSocket);
 
-			socket.on("getOnlineUsers", (users) => {
+			newSocket.on("getOnlineUsers", (users) => {
 				setOnlineUsers(users);
 			});
 
-			return () => socket.close();
+			return () => {
+				newSocket.disconnect(); // cleanup
+			};
 		} else {
 			if (socket) {
-				socket.close();
+				socket.disconnect();
 				setSocket(null);
 			}
 		}
 	}, [authUser]);
 
-	return <SocketContext.Provider value={{ socket, onlineUsers }}>{children}</SocketContext.Provider>;
+	return (
+		<SocketContext.Provider value={{ socket, onlineUsers }}>
+			{children}
+		</SocketContext.Provider>
+	);
 };
