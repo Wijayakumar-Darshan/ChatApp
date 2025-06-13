@@ -1,31 +1,28 @@
-import dotenv from "dotenv";
-dotenv.config();  // Load env vars ASAP
-
+import { Server } from "socket.io";
+import http from "http";
 import express from "express";
-import cookieParser from "cookie-parser";
+import cors from "cors";
 
-import authRoutes from "./routes/auth.routes.js";
-import messageRoutes from "./routes/message.routes.js";
-import userRoutes from "./routes/user.routes.js";
+const app = express();
 
-import connectToMongoDB from './db/connectToMongoDB.js';
-import { app, server } from "./socket/socket.js";
+const server = http.createServer(app);
 
-const PORT = process.env.PORT || 5000;
-
-app.use(express.json());
-app.use(cookieParser());
-
-// Serve static uploads folder for images (if you handle uploads)
-import path from "path";
-app.use("/uploads", express.static(path.resolve("uploads")));
-
-app.use("/api/auth", authRoutes);
-app.use("/api/messages", messageRoutes);
-app.use("/api/users", userRoutes);
-
-// Start server and connect to DB
-server.listen(PORT, () => {
-    connectToMongoDB();
-    console.log(`Server Running on port ${PORT}`);
+const io = new Server(server, {
+  cors: {
+    origin: [
+      "http://localhost:3000",         // local dev
+      "https://your-frontend.vercel.app" // deployed frontend
+    ],
+    methods: ["GET", "POST"],
+    credentials: true
+  }
 });
+
+// Setup your socket listeners
+io.on("connection", (socket) => {
+  console.log("A user connected: " + socket.id);
+
+  // your event listeners...
+});
+
+export { app, server };
